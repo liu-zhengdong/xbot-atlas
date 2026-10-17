@@ -1,7 +1,12 @@
 /* atlas-site ask-AI drawer: no API key. The question and the checked
    documents (.md copies of the pages) are joined into one prompt and handed
-   to an outside AI through a prefilled link, or the clipboard when the link
-   would be too long. Needs search.js (index + loose search). Vanilla JS. */
+   to an outside AI. Each AI button picks one of three modes, shown under it:
+     全文   prefilled link carrying the whole prompt (fits in MAX_URL);
+     链接   prefilled link with just the question and the absolute URLs of the
+            checked .md files and llms.txt, asking the AI to read them (only
+            when the full prompt is too long and --site-url is set);
+     复制   copy the whole prompt, then open the AI's site to paste.
+   Needs search.js (index + loose search). Vanilla JS. */
 (function () {
   'use strict';
   var body = document.body;
@@ -54,19 +59,26 @@
   }
 
   /* ---------------- documents ---------------- */
+  function md(d) { return d.m || d.u.replace(/\.html$/, '.md'); }   // sharded index omits m
   function stripFront(t) { return t.replace(/^---\n[\s\S]*?\n---\n/, ''); }
   function fallbackText(d) {   // file:// cannot fetch: rebuild from the search index text
-    return '# ' + d.t + '\n\n' + d.s.map(function (s) { return (s[1] ? '## ' + s[1] + '\n' : '') + s[2]; }).join('\n\n');
+    var secs = d.s || [];
+    return '# ' + d.t + '\n\n' + secs.map(function (s) { return (s[1] ? '## ' + s[1] + '\n' : '') + s[2]; }).join('\n\n');
   }
   function fetchDoc(i) {
     if (i in texts) return Promise.resolve(texts[i]);
     var d = IDX.docs[i];
     if (location.protocol === 'file:' || !window.fetch) { texts[i] = fallbackText(d); return Promise.resolve(texts[i]); }
-    return fetch(ROOT + d.m).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+    return fetch(ROOT + md(d)).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
       .then(function (t) { texts[i] = stripFront(t).trim(); }, function () { texts[i] = fallbackText(d); })
       .then(function () { return texts[i]; });
   }
-  function prefetch() { return Promise.all(items().map(function (x) { return fetchDoc(x[0]); })); }
+  function prefetch() {
+    var ids = items().map(function (x) { return x[0]; });
+    // sharded index: the fallback text lives in doc shards, load those first
+    return new Promise(function (res) { window.atlasSearch.docs(ids, function () { res(); }); })
+      .then(function () { return Promise.all(ids.map(fetchDoc)); });
+  }
 
   /* ---------------- prompt ---------------- */
   function prompt() {
@@ -76,9 +88,30 @@
     return head + checked().map(function (i) {
       var d = IDX.docs[i];
       var t = i in texts ? texts[i] : fallbackText(d);
-      return '\n---\n来源：' + b + d.m + '\n\n' + t + '\n';
+      return '\n---\n来源：' + b + md(d) + '\n\n' + t + '\n';
     }).join('');
   }
+  // Short prompt for link mode: the AI fetches the documents itself.
+  function linkPrompt() {
+    var name = IDX.name || 'atlas';
+    var q = question.trim() || '（在这里写你的问题）';
+    return q + '\n\n请先打开并阅读下面这些 ' + name + ' 文档（公开的 Markdown），只根据它们回答；不确定时说明还需要读哪一篇：\n' +
+      checked().map(function (i) { return '- ' + SITE_URL + md(IDX.docs[i]); }).join('\n') +
+      '\n\n全部文档的分层索引（需要时从这里找别的篇目）：' + SITE_URL + 'llms.txt\n';
+  }
+  // {mode: 'full' | 'link' | 'copy', url}
+  function plan(kind, p) {
+    var t = TARGETS[kind];
+    if (!t.prefill) return { mode: 'copy' };
+    var url = linkFor(kind, p || prompt());
+    if (url.length <= MAX_URL) return { mode: 'full', url: url };
+    if (SITE_URL) {
+      var lu = linkFor(kind, linkPrompt());
+      if (lu.length <= MAX_URL) return { mode: 'link', url: lu };
+    }
+    return { mode: 'copy' };
+  }
+  var MODE = { full: '带全文', link: '带文档链接', copy: '先复制全文' };
   function tokens(s) {   // rough: one token per CJK character, four characters otherwise
     var cjk = (s.match(/[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uac00-\ud7af\uff00-\uffef]/g) || []).length;
     return Math.round(cjk + (s.length - cjk) / 4);
@@ -96,10 +129,11 @@
       '<p class="ask-fit"></p>' +
       '<p class="ask-tip">不需要 API key：问题和勾选的文档会拼成一段提示词，带到你选的 AI 里。默认只勾本页和搜索命中，上一层、下一层按需勾选。</p></div>' +
       '<div class="ask-ft"><div class="ask-go">' +
-      '<button class="tbtn pri" type="button" data-go="chatgpt">' + IC.ext + '在 ChatGPT 打开</button>' +
-      '<button class="tbtn" type="button" data-go="claude">' + IC.ext + '在 Claude 打开</button>' +
-      '<button class="tbtn" type="button" data-go="deepseek">' + IC.ext + '在 DeepSeek 打开</button></div>' +
-      '<button class="tbtn ghost" type="button" data-go="copy">' + IC.copy + '复制提示词</button></div></aside>';
+      ['chatgpt', 'claude', 'deepseek'].map(function (k, n) {
+        return '<button class="tbtn two' + (n ? '' : ' pri') + '" type="button" data-go="' + k + '"><span>' + IC.ext + '在 ' + TARGETS[k].name +
+          ' 打开</span><small data-mode="' + k + '">' + MODE[TARGETS[k].prefill ? 'full' : 'copy'] + '</small></button>';
+      }).join('') + '</div>' +
+      '<button class="tbtn ghost" type="button" data-go="copy">' + IC.copy + '复制全文提示词</button></div></aside>';
     body.appendChild(wrap);
     toast = document.createElement('div');
     toast.className = 'toast'; toast.setAttribute('role', 'status');
@@ -110,8 +144,12 @@
       question = ta.value;
       clearTimeout(timer);
       timer = setTimeout(function () {
-        hits = IDX ? window.atlasSearch.loose(question, 4) : [];
-        draw(); prefetch().then(totals);
+        if (!IDX) return;
+        var q = question;
+        window.atlasSearch.looseAsync(q, 4, function (err, h) {
+          if (q !== question) return;
+          hits = h; draw(); prefetch().then(totals);
+        });
       }, 150);
       totals();
     });
@@ -139,12 +177,27 @@
   }
   function totals() {
     if (!IDX || !sizeEl) return;
-    var p = prompt(), url = linkFor('chatgpt', p);
+    var p = prompt(), url = linkFor('chatgpt', p), pl = plan('chatgpt', p);
     sizeEl.textContent = p.length.toLocaleString() + ' 字 · 约 ' + tokens(p).toLocaleString() + ' tokens';
-    fitEl.textContent = url.length <= MAX_URL
-      ? '预填链接 ' + url.length.toLocaleString() + ' 字符，可以直接带进 ChatGPT / Claude。'
-      : '预填链接 ' + url.length.toLocaleString() + ' 字符，超过 ' + MAX_URL.toLocaleString() + '：会先复制到剪贴板，再打开网站，粘贴即可。';
-    fitEl.classList.toggle('over', url.length > MAX_URL);
+    Object.keys(TARGETS).forEach(function (k) {
+      var el = wrap.querySelector('[data-mode="' + k + '"]'), m = plan(k, p).mode;
+      el.textContent = MODE[m];
+      el.parentNode.setAttribute('data-mode-now', m);
+      el.parentNode.title = {
+        full: '打开 ' + TARGETS[k].name + '，问题和文档全文已预填',
+        link: '打开 ' + TARGETS[k].name + '，只预填问题和文档网址，让它自己去读',
+        copy: '把全文提示词复制到剪贴板，再打开 ' + TARGETS[k].name + '，粘贴即可'
+      }[m];
+    });
+    var n = checked().length, over = MAX_URL.toLocaleString(), len = url.length.toLocaleString();
+    fitEl.textContent = pl.mode === 'full'
+      ? '带全文的预填链接 ' + len + ' 字符，ChatGPT / Claude 直接带全文打开；DeepSeek 没有预填链接，先复制全文。'
+      : pl.mode === 'link'
+        ? '带全文的预填链接要 ' + len + ' 字符，超过上限 ' + over + '：ChatGPT / Claude 改为只带问题和 ' + n + ' 篇文档的网址加 llms.txt（' + pl.url.length.toLocaleString() +
+          ' 字符），请 AI 自己去读，需要它能上网。想让 AI 直接看到全文，用「复制全文提示词」再粘贴。DeepSeek 先复制全文。'
+        : '带全文的预填链接要 ' + len + ' 字符，超过上限 ' + over + '：会先复制全文到剪贴板，再打开网站，粘贴即可。' +
+          (SITE_URL ? '' : '（构建时加 --site-url 后，ChatGPT / Claude 可以改为带文档链接打开。）');
+    fitEl.classList.toggle('over', pl.mode !== 'full');
   }
   function say(t) {
     toast.innerHTML = IC.check + '<span>' + esc(t) + '</span>';
@@ -171,9 +224,13 @@
     prefetch().then(function () {
       var p = prompt();
       if (kind === 'copy') { copy(p).then(function (ok) { say(ok ? '已复制提示词' : '复制失败，请手动选择'); }); return; }
-      var t = TARGETS[kind], url = linkFor(kind, p);
-      if (url && url.length <= MAX_URL) { window.open(url, '_blank', 'noopener'); return; }
-      copy(p).then(function (ok) { say(ok ? '已复制，粘贴即可' : '复制失败，请用「复制提示词」'); });
+      var t = TARGETS[kind], pl = plan(kind, p);
+      if (pl.mode !== 'copy') {
+        window.open(pl.url, '_blank', 'noopener');
+        if (pl.mode === 'link') say('已带上问题和文档链接，AI 会自己去读');
+        return;
+      }
+      copy(p).then(function (ok) { say(ok ? '已复制，粘贴即可' : '复制失败，请用「复制全文提示词」'); });
       window.open(t.home, '_blank', 'noopener');
     });
   }
@@ -188,8 +245,12 @@
       IDX = window.atlasSearch.index();
       cur = -1;
       IDX.docs.forEach(function (d, i) { if (d.u === PAGE) cur = i; });
-      if (question) hits = window.atlasSearch.loose(question, 4);
-      draw(); prefetch().then(totals);
+      var q = question;
+      window.atlasSearch.looseAsync(q, 4, function (e, h) {
+        if (q !== question) return;
+        hits = q ? h : [];
+        draw(); prefetch().then(totals);
+      });
     });
   }
   function close() {
@@ -204,6 +265,8 @@
     open: open, close: close,
     prompt: function () { return prompt(); },
     link: function (k) { return linkFor(k, prompt()); },
+    plan: function (k) { return plan(k); },
+    linkPrompt: function () { return linkPrompt(); },
     ready: function () { return prefetch(); }
   };
 })();

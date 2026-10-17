@@ -1,6 +1,6 @@
 ---
 kind: part
-verified: 2026-10-16 @ d04f79e
+verified: 2026-10-17 @ 0418c26
 path: docs/atlas/README.md
 html: https://liu-zhengdong.github.io/xbot-atlas/index.html
 ---
@@ -9,7 +9,7 @@ html: https://liu-zhengdong.github.io/xbot-atlas/index.html
 > **30 秒版**：XBot 是用 Go 从零写的个人 AI 助手，给一个主人在自己的机器上长期使用。交互单位是 **Bot**：一个有名字、有记忆、长期存在的实体，同一个主题只找一个 Bot，上下文一直连着，系统里没有"会话"。Bot 能在没人叫它时醒来，判断有没有值得告诉主人的事；能在授权的机器上做主人在终端里能做的事。终端和网页是同一条对话的两个入口。
 
 ## 愿景与思想
-> 已确认（2026-10-16，主人确认）。
+> 已确认（2026-10-16，主人确认；最后一段 2026-10-17 更新，主人确认）。
 
 Bot 是第三代交互模型。第一代是 Chat，第二代是 Session 和 Agent，第三代是 Bot：一个有记忆、长期存在的实体。主人不需要管理会话，也不需要 `--resume`；想聊哪件事，就去找负责这件事的那个 Bot。
 
@@ -19,7 +19,18 @@ Bot 有主动性。webhook、文件监听、其他 Bot、定时器都能唤醒�
 
 Bot 是全能的。授权给它的机器，它能做主人在终端里能做的任何事。隔离靠部署方式，安全靠操作审核和保险箱，不靠假装能限制文件访问。
 
-主人希望 Bot 任何时候都能在几秒内回应，哪怕它正忙着长任务，这是当前在做的「插话时分叉」。接下来是开源网关、P2P 和跨用户通信（M8）。进度见 [MILESTONES](https://github.com/liu-zhengdong/xbot/blob/main/docs/MILESTONES.md)。
+主人希望 Bot 任何时候都能在几秒内回应，哪怕它正忙着长任务，这一点靠「插话时分叉」做到了。现在在做的是对照 Claude Code 内部机制调研定下的 8 步内核计划：提醒通道与熔断、文件新鲜度、待办清单、shell 后台化、环境感知、搜索与看图、子代理类型、权限规则，前三步已经合入，第四步在做。同时三个 Bot 连续运行两周做验收，到 10-30 结束。再往后是开源网关、P2P 和跨用户通信。新想法先进 [候选清单](https://github.com/liu-zhengdong/xbot/blob/main/docs/CANDIDATES.md)，不当场开工；计划和进度见 [MILESTONES](https://github.com/liu-zhengdong/xbot/blob/main/docs/MILESTONES.md)。
+
+## 思想地图
+上面「愿景与思想」讲的是想把 XBot 做成什么样；下面几篇讲主人做这件事的方法。改内核、改提示、改合并流程之前，先读对应的那一篇。
+
+| 思想 | 一句话 | 读完能明白什么 | 文档 |
+|---|---|---|---|
+| 内核要薄 | 只留 Link、Event、收件箱、执行器任务几个抽象，约束由 harness 强制执行 | 为什么新功能先找已有抽象，为什么规则放在工具和内核里而不是提示里 | [ideas/thin-kernel.md](ideas/thin-kernel.md) |
+| 评测把关，不对着题调 | 行为由评测判定；留出套件只在验收时跑；每条规则都要是通用原则 | 怎么改提示才算改好了，为什么普通套件全过还不够 | [ideas/eval-gated.md](ideas/eval-gated.md) |
+| 收敛与主动补齐 | 主动做目标显然需要的配套，同时有预算、有边界、做不到就停 | Bot 什么时候该多走一步，什么时候该停下 | [ideas/convergence-and-ownership.md](ideas/convergence-and-ownership.md) |
+| 分级合并门槛 | 测试全绿才合并，修复必带回归测试，大改再加复测和独立评审 | 一个改动要过哪些关才能进 main | [ideas/tiered-merge-gates.md](ideas/tiered-merge-gates.md) |
+| 自我修改要可控 | Bot 改自己时，每一步都过评测门、可回滚、留记录 | 自进化可以走多远、哪些线不能碰 | [ideas/self-modification.md](ideas/self-modification.md) |
 
 ## 你需要知道的术语
 | 术语 | 白话解释 | 代码里叫 |
@@ -34,7 +45,7 @@ Bot 是全能的。授权给它的机器，它能做主人在终端里能做的�
 ## 组成
 | 部分 | 一句话 | 什么时候读 | 文档 |
 |---|---|---|---|
-| 内核 | Link、Event、收件箱、事件循环 | 改一轮对话怎么跑、事件怎么进来 | [kernel.md](kernel.md) |
+| 内核 | Link、Event、收件箱、事件循环，以及一轮里的提醒、熔断、文件新鲜度和待办清单 | 改一轮对话怎么跑、事件怎么进来、什么时候停 | [kernel.md](kernel.md) |
 | 上下文与 transcript | 固定前缀、分段存储、索引、压缩、找回、导出 | 改 `internal/bot/transcript.go`、压缩、导出 | [context.md](context.md) |
 | 身份与记忆 | 人、三层记忆、冲突规则 | 改 `internal/memory`、`internal/person` | [memory.md](memory.md) |
 | 子代理 | 后台子代理与执行者 | 改 `internal/exec`、`internal/agent` | [subagents.md](subagents.md) |
@@ -79,6 +90,9 @@ flowchart LR
 | Agent 入口 | [AGENTS.md](https://github.com/liu-zhengdong/xbot/blob/main/AGENTS.md) | 编码 Agent | 活的 | 主人 |
 | 里程碑与进度 | [MILESTONES.md](https://github.com/liu-zhengdong/xbot/blob/main/docs/MILESTONES.md) | 主人、开发者 | 活的，天天变 | Bot 复刻 |
 | 网页 HTTP 接口 | [API.md](https://github.com/liu-zhengdong/xbot/blob/main/docs/API.md) | 界面开发者 | 活的 | 开发者 |
+| 候选清单 | [CANDIDATES.md](https://github.com/liu-zhengdong/xbot/blob/main/docs/CANDIDATES.md) | 主人、Bot 复刻 | 活的，新想法先进这里，不当场开工 | Bot 复刻（周调研、每晚复盘时更新） |
+| 调研笔记 | [docs/research/](https://github.com/liu-zhengdong/xbot/blob/main/docs/research/) | 开发者 | 写完即冻结，结论进候选清单或里程碑 | Bot 复刻 |
+| 教训 | [LESSONS.md](https://github.com/liu-zhengdong/xbot/blob/main/LESSONS.md) | 编码 Agent、Bot 复刻 | 活的，同一条出现 3 天升级成硬约束 | Bot 复刻 |
 | 决策记录 | [docs/adr/](adr/index.html) | 开发者、将来的主人 | 守护层，只追加 | 主人 |
 | 旧设计入口 | [DESIGN.md](https://github.com/liu-zhengdong/xbot/blob/main/docs/DESIGN.md) | — | 已并入 atlas，只留指针 | — |
 | 模型提示 | [prompts/models/README.md](https://github.com/liu-zhengdong/xbot/blob/main/prompts/models/README.md) | 调提示的人 | 活的 | 开发者 |
@@ -90,4 +104,4 @@ flowchart LR
 - 界面：60fps；动画只动 transform/opacity，时长不超过 200 毫秒；遵守 prefers-reduced-motion；轮询不能引起重排、卡顿或抢焦点。
 - 每个里程碑验收都要报性能数字。
 
-ADR 一览：[0001 多个后台](adr/0001-multiple-backgrounds.md)、[0002 前台写操作自动排队](adr/0002-foreground-writes-auto-queue.md)、[0003 一张权限表](adr/0003-one-permission-table.md)、[0004 去掉主动性三档](adr/0004-drop-proactivity-levels.md)。
+ADR 一览：[0001 多个后台](adr/0001-multiple-backgrounds.md)、[0002 前台写操作自动排队](adr/0002-foreground-writes-auto-queue.md)、[0003 一张权限表](adr/0003-one-permission-table.md)、[0004 去掉主动性三档](adr/0004-drop-proactivity-levels.md)、[0005 保险箱交给独立系统用户的守护进程](adr/0005-vault-daemon-user.md)。

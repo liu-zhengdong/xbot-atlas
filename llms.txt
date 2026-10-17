@@ -7,7 +7,7 @@
 ## 组成树
 
 - [XBot：新人导览](https://liu-zhengdong.github.io/xbot-atlas/index.md): XBot 是用 Go 从零写的个人 AI 助手，给一个主人在自己的机器上长期使用。
-  - [内核：Link、Event、收件箱](https://liu-zhengdong.github.io/xbot-atlas/kernel.md): Link、Event、收件箱、事件循环
+  - [内核：Link、Event、收件箱](https://liu-zhengdong.github.io/xbot-atlas/kernel.md): Link、Event、收件箱、事件循环，以及一轮里的提醒、熔断、文件新鲜度和待办清单
   - [上下文与 transcript](https://liu-zhengdong.github.io/xbot-atlas/context.md): 固定前缀、分段存储、索引、压缩、找回、导出
   - [身份与记忆](https://liu-zhengdong.github.io/xbot-atlas/memory.md): 人、三层记忆、冲突规则
   - [后台工作与子代理](https://liu-zhengdong.github.io/xbot-atlas/subagents.md): 后台子代理与执行者
@@ -23,7 +23,11 @@
 
 ## 思想线
 
-（还没有思想节点）
+- [内核要薄，约束放进 harness](https://liu-zhengdong.github.io/xbot-atlas/ideas/thin-kernel.md): 只留 Link、Event、收件箱、执行器任务几个抽象，约束由 harness 强制执行
+- [评测把关，不对着题调](https://liu-zhengdong.github.io/xbot-atlas/ideas/eval-gated.md): 行为由评测判定；留出套件只在验收时跑；每条规则都要是通用原则
+- [收敛与主动补齐](https://liu-zhengdong.github.io/xbot-atlas/ideas/convergence-and-ownership.md): 主动做目标显然需要的配套，同时有预算、有边界、做不到就停
+- [分级合并门槛与回归测试](https://liu-zhengdong.github.io/xbot-atlas/ideas/tiered-merge-gates.md): 测试全绿才合并，修复必带回归测试，大改再加复测和独立评审
+- [自我修改要可控：过评测门、可回滚、留记录](https://liu-zhengdong.github.io/xbot-atlas/ideas/self-modification.md): Bot 改自己时，每一步都过评测门、可回滚、留记录
 
 ## 决策记录
 

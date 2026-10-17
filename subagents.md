@@ -2,7 +2,7 @@
 kind: part
 parent: README.md
 code: [internal/exec/, internal/agent/]
-verified: 2026-10-17 @ b409268
+verified: 2026-10-17 @ 0418c26
 path: docs/atlas/subagents.md
 html: https://liu-zhengdong.github.io/xbot-atlas/subagents.html
 ---
@@ -15,7 +15,7 @@ html: https://liu-zhengdong.github.io/xbot-atlas/subagents.html
 
 ## 怎么运转
 - 快的事主线自己做；耗时长的任务交给子代理，主线保持随时能响应。
-- 子代理有三种起步方式：空白上下文加任务说明，fork 主线当前的上下文，或者 explore。explore 只留只读工具，不注入待办提醒。
+- 子代理有两种起步方式：空白上下文加任务说明，或者 fork 主线当前的上下文。
 - 主线可以随时对运行中的子代理**补充**（不丢已完成的工作）、**排队**、**打断**、**取消**。子代理会把进度、卡住、完成等事件发回主线的收件箱。
 - 每个子代理都有自己的记录，主线可以查阅。
 - **执行者**是一个独立服务（`xbot runner`），通过 Link 接入；本地 goroutine 和远程执行者只是同一接口的两种部署方式。

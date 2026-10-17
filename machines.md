@@ -2,7 +2,7 @@
 kind: part
 parent: README.md
 code: [internal/machine/, internal/node/, internal/nodesync/, internal/tunnel/, internal/browser/, internal/desktop/]
-verified: 2026-10-16 @ d04f79e
+verified: 2026-10-17 @ 0418c26
 path: docs/atlas/machines.md
 html: https://liu-zhengdong.github.io/xbot-atlas/machines.html
 ---
