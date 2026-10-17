@@ -1,0 +1,34 @@
+# XBot atlas
+
+> XBot 是用 Go 从零写的个人 AI 助手，给一个主人在自己的机器上长期使用。
+
+分层索引：每篇一行，标题、一句话、Markdown 全文链接。组成树按层缩进；先读根节点，再按需往下读。
+
+## 组成树
+
+- [XBot：新人导览](https://liu-zhengdong.github.io/xbot-atlas/index.md): XBot 是用 Go 从零写的个人 AI 助手，给一个主人在自己的机器上长期使用。
+  - [内核：Link、Event、收件箱](https://liu-zhengdong.github.io/xbot-atlas/kernel.md): Link、Event、收件箱、事件循环
+  - [上下文与 transcript](https://liu-zhengdong.github.io/xbot-atlas/context.md): 固定前缀、分段存储、索引、压缩、找回、导出
+  - [身份与记忆](https://liu-zhengdong.github.io/xbot-atlas/memory.md): 人、三层记忆、冲突规则
+  - [后台工作与子代理](https://liu-zhengdong.github.io/xbot-atlas/subagents.md): 后台子代理与执行者
+  - [插话时分叉](https://liu-zhengdong.github.io/xbot-atlas/fork.md): 插话时一轮分成前台和后台
+  - [多 Bot](https://liu-zhengdong.github.io/xbot-atlas/multibot.md): 主 Bot、分组、Fork Bot、Bot 间通信、档案、例程
+  - [机器与设备](https://liu-zhengdong.github.io/xbot-atlas/machines.md): 机器开关、多节点、隧道、浏览器、桌面
+  - [生态：Link、MCP、技能、连接器、编码代理](https://liu-zhengdong.github.io/xbot-atlas/ecosystem.md): 内置 Link、MCP、技能、连接器、编码代理
+  - [安全：保险箱与权限表](https://liu-zhengdong.github.io/xbot-atlas/security.md): 保险箱、出站代理、权限表
+  - [模型供应商与主动性评测](https://liu-zhengdong.github.io/xbot-atlas/providers.md): 供应商、模型提示、认证、主动性评测
+  - [网页界面](https://liu-zhengdong.github.io/xbot-atlas/ui.md): 对话、轨迹、确认卡、侧边栏
+  - [版本与自动升级](https://liu-zhengdong.github.io/xbot-atlas/release.md): 版本注入、发布脚本、检查与应用升级、优雅重起
+  - [网关（计划中，M8）](https://liu-zhengdong.github.io/xbot-atlas/gateway.md): 开源网关、P2P、Bot 地址（计划中）
+
+## 思想线
+
+（还没有思想节点）
+
+## 决策记录
+
+- [0001 插话分叉允许多个后台并行](https://liu-zhengdong.github.io/xbot-atlas/adr/0001-multiple-backgrounds.md): 插话时正在跑的一轮分叉成后台；已有后台时新任务立刻开新的 bg_ 执行器。
+- [0002 前台写操作自动排到后台之后](https://liu-zhengdong.github.io/xbot-atlas/adr/0002-foreground-writes-auto-queue.md): 内核自动用 queue 把前台写操作交给资源重叠的后台，前台告诉主人已排队；没有重叠就转成新的后台。
+- [0003 一张权限表决定所有确认，只确认四类](https://liu-zhengdong.github.io/xbot-atlas/adr/0003-one-permission-table.md): 内核里一张显式权限表按工具名（http、shell、self_edit 再看参数）决定是否确认；工具的 Confirm 只生成摘要。
+- [0004 去掉安静、适中、积极三档主动性](https://liu-zhengdong.github.io/xbot-atlas/adr/0004-drop-proactivity-levels.md): 去掉三档。
+- [0005 保险箱交给独立系统用户的守护进程](https://liu-zhengdong.github.io/xbot-atlas/adr/0005-vault-daemon-user.md): 保险箱抽象成后端接口（vault.Backend）：列名字、注入并转发请求、设置/删除。
