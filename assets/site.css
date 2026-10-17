@@ -15,7 +15,11 @@ code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.86em
 .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
 .side{display:flex;flex-direction:column;gap:10px;padding:14px 10px;position:sticky;top:0;height:100vh;overflow:auto}
 .main{margin:8px 8px 8px 0;background:var(--card);border-radius:14px;min-width:0;box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.04)}
-.content{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:32px;padding:4px 28px 48px}
+/* Article + TOC are one group, centered in the content area, so very wide
+   screens get even margins instead of a gap between article and TOC.
+   At 1280-1440 the group fills the area, as before. */
+:root{--article:860px;--toc:180px;--colgap:32px;--group:calc(var(--article) + var(--colgap) + var(--toc))}
+.content{display:grid;grid-template-columns:minmax(0,var(--article)) var(--toc);gap:var(--colgap);justify-content:center;padding:4px 28px 48px}
 
 /* sidebar */
 .brand{display:flex;align-items:center;gap:8px;padding:4px 8px;font-size:14px;text-decoration:none}.brand .sub{color:var(--mute)}
@@ -33,6 +37,7 @@ details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-
 
 /* page header */
 .ph{padding:14px 28px 18px;position:sticky;top:0;background:var(--card);border-radius:14px 14px 0 0;z-index:2}
+.ph>*{max-width:var(--group);margin-left:auto;margin-right:auto}
 .crumb{display:flex;align-items:center;gap:6px;color:var(--mute);font-size:13px;min-height:30px}.crumb a{text-decoration:none}.crumb a:hover{color:var(--fg)}.crumb .i{width:12px;height:12px}.sp{flex:1}
 .tb{background:none;border:0;color:var(--mute);cursor:pointer;display:grid;place-items:center;width:30px;height:30px;border-radius:8px}.tb:hover{background:var(--hover);color:var(--fg)}
 .kind{margin-top:12px;font-size:12px;color:var(--mute)}
@@ -48,7 +53,7 @@ a.chip:hover{background:var(--hover)}
 .toc a{text-decoration:none;color:var(--mute);padding:2px 0}.toc a:hover{color:var(--fg)}
 
 /* document */
-.doc{max-width:860px}
+.doc{min-width:0}
 .doc h2{font-size:15px;margin:28px 0 8px;scroll-margin-top:150px}.doc h3{font-size:13.5px;margin:20px 0 6px;scroll-margin-top:150px}.doc h4{font-size:13px;margin:16px 0 4px;color:var(--mute)}
 .doc a{text-decoration:underline;text-decoration-color:var(--mute2);text-underline-offset:3px}.doc a:hover{text-decoration-color:var(--fg)}
 .doc .xref{text-decoration:underline dotted var(--mute2);text-underline-offset:3px;cursor:help}
@@ -95,7 +100,7 @@ tbody tr:nth-child(odd) :not(pre)>code{background:var(--card)}
 .emptybox .i{width:22px;height:22px;color:var(--mute2);margin-bottom:6px}.emptybox b{color:var(--fg);font-weight:550}.emptybox span{font-size:12.5px}
 
 /* narrow screens */
-@media (max-width:1100px){.content{grid-template-columns:minmax(0,1fr)}.toc{display:none}}
+@media (max-width:1100px){:root{--group:var(--article)}.content{grid-template-columns:minmax(0,var(--article))}.toc{display:none}}
 @media (max-width:760px){.app{grid-template-columns:1fr}.side{position:static;height:auto}.main{margin:0 8px 8px}.ph{position:static}.entries{grid-template-columns:1fr}}
 
 /* search: sidebar button and the centered panel */
