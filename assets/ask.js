@@ -234,11 +234,15 @@
       window.open(t.home, '_blank', 'noopener');
     });
   }
+  var lastFocus = null;
   function open() {
     if (!wrap) build();
+    if (!wrap.hidden) return;
+    lastFocus = document.activeElement;
     wrap.hidden = false;
     document.documentElement.classList.add('pal-open');
-    ta.focus();
+    var app = document.querySelector('.app'); if (app) app.inert = true;   // page behind is not focusable
+    ta.focus({ preventScroll: true });
     draw();
     window.atlasSearch.load(function (err) {
       if (err) { list.innerHTML = '<p class="ask-tip">索引载入失败：请确认 search-index.js 和页面一起部署。</p>'; return; }
@@ -257,6 +261,8 @@
     if (!wrap || wrap.hidden) return;
     wrap.hidden = true;
     document.documentElement.classList.remove('pal-open');
+    var app = document.querySelector('.app'); if (app) app.inert = false;
+    if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
 
   document.querySelectorAll('[data-ask]').forEach(function (b) { b.addEventListener('click', open); });

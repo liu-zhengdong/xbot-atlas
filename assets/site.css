@@ -121,7 +121,8 @@ tbody tr:nth-child(odd) :not(pre)>code{background:var(--card)}
 kbd{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;background:var(--hover);color:var(--mute);border-radius:4px;padding:1px 5px}
 .search{display:flex;align-items:center;gap:8px;width:100%;border:0;background:var(--hover);color:var(--mute);border-radius:8px;padding:6px 10px;font:inherit;font-size:12.5px;text-align:left;cursor:pointer}
 .search:hover{background:var(--hover2)}.search kbd{margin-left:auto;background:var(--card)}
-.pal-open,.pal-open body{overflow:hidden}
+/* overlays (search, ask): lock page scroll on the root only (body stays visible so the sticky sidebar keeps its place); the gutter is always reserved so hiding the scrollbar shifts nothing */
+html{scrollbar-gutter:stable}.pal-open{overflow:hidden}
 .pal-wrap{position:fixed;inset:0;background:var(--scrim);z-index:50;display:flex;justify-content:center;align-items:flex-start;padding-top:12vh}
 .pal-wrap[hidden]{display:none}
 .pal{width:640px;max-width:calc(100vw - 32px);background:var(--pop);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;max-height:70vh}
@@ -155,9 +156,9 @@ mark{background:var(--mark);color:var(--fg);border-radius:3px;padding:0 1px}.pal
 .ask-sz{margin-left:auto;font-weight:400;font-family:ui-monospace,Menlo,monospace;font-size:11px}
 .ask-it{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:9px;cursor:pointer;position:relative}.ask-it:hover{background:var(--bg)}
 .ask-it input{position:absolute;opacity:0;pointer-events:none}
-.cb{width:16px;height:16px;border-radius:5px;background:var(--hover2);display:grid;place-items:center;margin-top:2px;flex:none;color:transparent}.cb .i{width:12px;height:12px;stroke-width:2.6}
-.ask-it input:checked+.cb{background:var(--fg);color:var(--pop)}.ask-it input:focus-visible+.cb{outline:2px solid var(--mute);outline-offset:2px}
-.ask-it div{display:flex;flex-direction:column;min-width:0}.ask-it b{font-weight:550;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ask-it span{font-size:11.5px;color:var(--mute)}
+.ask-it .cb{width:16px;height:16px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1.5px var(--mute2);display:grid;place-items:center;margin-top:2px;flex:none;color:transparent}.cb .i{width:12px;height:12px;stroke-width:2.6}
+.ask-it input:checked+.cb{background:var(--fg);box-shadow:none;color:var(--pop)}.ask-it input:focus-visible+.cb{outline:2px solid var(--mute);outline-offset:2px}
+.ask-it div{display:flex;flex-direction:column;min-width:0}.ask-it b{font-weight:550;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ask-it div span{font-size:11.5px;color:var(--mute)}
 .ask-fit{font-size:12px;color:var(--mute);margin:10px 2px 0}.ask-fit.over{color:var(--fg)}
 .ask-tip{font-size:12px;color:var(--mute2);margin:14px 2px 0}
 .ask-ft{padding:12px 20px 18px;display:flex;flex-direction:column;gap:8px;background:var(--pop)}

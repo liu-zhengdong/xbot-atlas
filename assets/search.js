@@ -347,10 +347,12 @@
   }
   function open() {
     if (!wrap) build();
+    if (!wrap.hidden) { input.focus(); return; }
     lastFocus = document.activeElement;
     wrap.hidden = false;
     document.documentElement.classList.add('pal-open');
-    input.focus(); input.select();
+    var app = document.querySelector('.app'); if (app) app.inert = true;   // page behind is not focusable
+    input.focus({ preventScroll: true }); input.select();
     load(function (err) { if (err) { empty('索引载入失败', '请确认 search-index.js 和页面一起部署'); return; } if (!wrap.hidden) render(); });
     render();
   }
@@ -358,7 +360,8 @@
     if (!wrap || wrap.hidden) return;
     wrap.hidden = true;
     document.documentElement.classList.remove('pal-open');
-    if (lastFocus && lastFocus.focus) lastFocus.focus();
+    var app = document.querySelector('.app'); if (app) app.inert = false;
+    if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
 
   document.querySelectorAll('[data-open-search]').forEach(function (b) { b.addEventListener('click', open); });
